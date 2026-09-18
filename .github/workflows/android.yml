@@ -1,4 +1,4 @@
-name: Build APK (FIX DEFINITIVO)
+name: Build APK (Clean Stable)
 
 on:
   push:
@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+    # -------------------------
+    # CHECKOUT
+    # -------------------------
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -32,13 +35,15 @@ jobs:
     # -------------------------
     # SYSTEM DEPENDENCIES
     # -------------------------
-    - name: Install dependencies
+    - name: Install system deps
       run: |
         sudo apt update
-        sudo apt install -y git zip unzip wget openjdk-17-jdk
+        sudo apt install -y git zip unzip wget openjdk-17-jdk \
+        build-essential autoconf automake libtool pkg-config \
+        zlib1g-dev libncurses5-dev libffi-dev libssl-dev
 
     # -------------------------
-    # BUILD TOOL PYTHON
+    # PYTHON DEPENDENCIES
     # -------------------------
     - name: Install Buildozer
       run: |
@@ -46,36 +51,17 @@ jobs:
         pip install cython buildozer
 
     # -------------------------
-    # ANDROID SDK (FIX AIDL DEFINITIVO)
+    # CLEAN BUILDOZER CACHE (IMPORTANT)
     # -------------------------
-    - name: Install Android SDK manually
+    - name: Clean Buildozer cache
       run: |
-        export ANDROID_HOME=$HOME/android-sdk
-        mkdir -p $ANDROID_HOME
-
-        cd $HOME
-        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip commandlinetools-linux-11076708_latest.zip -d $ANDROID_HOME
-
-        mkdir -p $ANDROID_HOME/cmdline-tools/latest
-        mv $ANDROID_HOME/cmdline-tools $ANDROID_HOME/cmdline-tools/latest || true
-
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-
-        yes | sdkmanager --licenses
-
-        sdkmanager \
-          "platform-tools" \
-          "platforms;android-34" \
-          "build-tools;34.0.0"
+        rm -rf ~/.buildozer
 
     # -------------------------
-    # BUILD
+    # BUILD APK (LET BUILDOZER HANDLE SDK)
     # -------------------------
     - name: Build APK
       run: |
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
         buildozer -v android debug
 
     # -------------------------
